@@ -53,7 +53,7 @@ def populatingGridMatHOSP(hospGPD,dataHosp,center,xX,yY,year):
     
     # Creating a perfect day array
     startDate = datetime.datetime(year, 1, 1, 0, 0)
-    endDate = datetime.datetime(year, 12, 31, 0, 0)
+    endDate = datetime.datetime(year+1, 1, 1, 0, 0)
     datePfct = np.arange(np.datetime64(startDate),np.datetime64(endDate),3600000000*24)
     datePfct = pd.DataFrame(datePfct)
     datePfct['year'] = pd.DatetimeIndex(datePfct.iloc[:,0]).year
