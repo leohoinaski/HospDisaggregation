@@ -100,7 +100,8 @@ def createNETCDFtemporal(folder,name,data,xv,yv,lat,lon,dates,outType):
     f2.createDimension('VAR', data.shape[1])
     f2.createDimension('ROW', len(lat)-1)
     f2.createDimension('COL', len(lon)-1)
-    
+    print('nlat ' + str(len(lat)-1 ))
+    print('nlon ' + str(len(lon)-1 ))
     # Building variables
     TFLAG = f2.createVariable('TFLAG', 'i4', ('TSTEP', 'VAR', 'DATE-TIME'))
     print(f2['TFLAG'])
