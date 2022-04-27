@@ -288,8 +288,8 @@ def HospDisaggregation(hospFile,listCEPfile,lati,latf,loni,lonf,
     
     	# ------------------------- Creating grid ------------------------------------- 
         print('Setting domain borders')
-        x = np.linspace(loni, lonf, int((lonf-loni)/deltaX))
-        y = np.linspace(lati, latf, int((latf-lati)/deltaY))
+        x = np.arange(loni, lonf+deltaX, deltaX)
+        y = np.arange(lati, latf+deltaY, deltaY)
     
     	#Loop over each cel in x direction
         polygons=[]

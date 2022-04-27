@@ -21,13 +21,13 @@ listCEPfile = 'qualocep_geo.csv'
 #-------------------------Setting grid resolution------------------------------
 
 # Users can change the domain and resolution here.
-lati =-35 #lati = int(round(bound.miny)) # Initial latitude (lower-left)
+lati =-38 #lati = int(round(bound.miny)) # Initial latitude (lower-left)
 
-latf = 15 #latf = int(round(bound.maxy)) # Final latitude (upper-right)
+latf = 8 #latf = int(round(bound.maxy)) # Final latitude (upper-right)
 
-loni = -75 #loni = int(round(bound.minx)) # Initial longitude (lower-left)
+loni = -76.875 #loni = int(round(bound.minx)) # Initial longitude (lower-left)
 
-lonf = -25 #lonf = int(round(bound.maxx)) # Final longitude (upper-right)
+lonf = -30 #lonf = int(round(bound.maxx)) # Final longitude (upper-right)
 
 deltaX = 0.625 # Grid resolution/spacing in x direction
 
