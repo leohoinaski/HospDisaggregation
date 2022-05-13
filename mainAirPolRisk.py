@@ -9,6 +9,11 @@ Created on Thu Mar 17 09:06:19 2022
 from HospDisaggregation_v2 import HospDisaggregation
 from pop_regrid import pop_regrid
 from pop_rel import pop_relativization
+import numpy as np
+import geopandas as gpd
+import pandas as pd
+import os
+from shapely.geometry import Polygon
 
 #%%-----------------------------INPUTS-----------------------------------------
 
@@ -21,17 +26,19 @@ listCEPfile = 'qualocep_geo.csv'
 #-------------------------Setting grid resolution------------------------------
 
 # Users can change the domain and resolution here.
-lati =-38 #lati = int(round(bound.miny)) # Initial latitude (lower-left)
-
-latf = 8 #latf = int(round(bound.maxy)) # Final latitude (upper-right)
-
-loni = -76.875 #loni = int(round(bound.minx)) # Initial longitude (lower-left)
-
-lonf = -30 #lonf = int(round(bound.maxx)) # Final longitude (upper-right)
-
 deltaX = 0.625 # Grid resolution/spacing in x direction
 
-deltaY = 0.5 # Grig resolution/spacing in y direction
+deltaY = 0.5 # Grid resolution/spacing in y direction
+
+lati =-34.5 -(deltaY/2) #lati = int(round(bound.miny)) # Initial lati>
+
+latf = 6  -(deltaY/2) #latf = int(round(bound.maxy)) # Final latitude>
+
+loni = -74.375 -(deltaX/2) #loni = int(round(bound.minx)) # Initial l>
+
+lonf = -33.75 -(deltaX/2)
+
+prefix = str(deltaX)+'x'+str(deltaY) # grid definition identification
 
 prefix = str(deltaX)+'x'+str(deltaY) # grid definition identification
 
@@ -39,7 +46,7 @@ prefix = str(deltaX)+'x'+str(deltaY) # grid definition identification
 
 disType = 'RESP'
 
-runOrNotTemporal = 1 # Run or not daily temporal profile and daily netCDF
+runOrNotTemporal = 0 # Run or not daily temporal profile and daily netCDF
 
 vulGroups =  ['Total','less14','more60','adults',
              'mens','womans','blacks','whites',
@@ -47,13 +54,43 @@ vulGroups =  ['Total','less14','more60','adults',
 
 baseGridFile = 'baseGrid_'+prefix+'.csv'
 years =range(2002,2019)
-years = [2008]
+years = [2020]
 
 #%%
 
-years = HospDisaggregation(hospFile, listCEPfile, lati, latf, loni, lonf, 
-                   deltaX, deltaY, prefix,runOrNotTemporal, vulGroups)
+#years = HospDisaggregation(hospFile, listCEPfile, lati, latf, loni, lonf, 
+#                   deltaX, deltaY, prefix,runOrNotTemporal, vulGroups)
+
+# Seting root folder
+rootPath= os.path.abspath(os.getcwd())
+
+# Seting output folder
+outPath=rootPath+'/Outputs'
+if os.path.isdir(outPath)==0:
+    os.mkdir(outPath)                   
+# ------------------------- Creating grid ------------------------------------- 
+print('Setting domain borders')
+x = np.arange(loni, lonf+deltaX, deltaX)
+y = np.arange(lati, latf+deltaY, deltaY)
+
+#Loop over each cel in x direction
+polygons=[]
+for ii in range(1,x.shape[0]):
+    #Loop over each cel in y direction
+    for jj in range(1,y.shape[0]):
+        #roadClip=[]
+        lat_point_list = [y[jj-1], y[jj], y[jj], y[jj-1]]
+        lon_point_list = [x[ii-1], x[ii-1], x[ii], x[ii]]
+        cel = Polygon(zip(lon_point_list, lat_point_list))
+        polygons.append(cel)
+
+    
+# Creating basegridfile
+baseGrid = gpd.GeoDataFrame({'geometry':polygons})
+baseGrid.to_csv(outPath+'/baseGrid_'+prefix+'.csv')
+baseGrid.crs = "EPSG:4326" 
+print('baseGrid_'+prefix+'.csv was created at ' + outPath )               
 
 pop_regrid(years,baseGridFile)
 
-pop_relativization(years,disType,prefix)
+#pop_relativization(years,disType,prefix)
