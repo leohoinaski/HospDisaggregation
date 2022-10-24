@@ -13,6 +13,8 @@ from shapely.geometry import MultiLineString
 from shapely.ops import polygonize
 import datetime
 import numpy.matlib
+from shapely.geometry import Polygon
+import netCDF4 as nc4
 
 #%% Gridding and populatingGrid functions
 
@@ -85,3 +87,40 @@ def populatingGridMatHOSP(hospGPD,dataHosp,center,xX,yY,year):
             
     
     return dataTempo,datePfct
+
+def domainAndGrid(lati,loni,latf,lonf, deltaX,deltaY):
+    print('Setting domain borders')
+    x = np.arange(loni, lonf+deltaX, deltaX)
+    y = np.arange(lati, latf+deltaY, deltaY)
+    
+    	#Loop over each cel in x direction
+    polygons=[]
+    for ii in range(1,x.shape[0]):
+	    #Loop over each cel in y direction
+	    for jj in range(1,y.shape[0]):
+	        #roadClip=[]
+	        lat_point_list = [y[jj-1], y[jj], y[jj], y[jj-1]]
+	        lon_point_list = [x[ii-1], x[ii-1], x[ii], x[ii]]
+	        cel = Polygon(zip(lon_point_list, lat_point_list))
+	        polygons.append(cel)
+    return polygons,x,y
+
+def domainAndGridMCIP(mcipGRIDDOT2DPath):   
+    print('Extracting MCIP coordinates')
+    ds = nc4.Dataset(mcipGRIDDOT2DPath)
+    #dataVar = list(ds.variables.keys())
+    x = np.unique(ds['LOND'][:])
+    y = np.unique(ds['LATD'][:])
+    
+    polygons=[]
+    for ii in range(1,x.shape[0]):
+	    #Loop over each cel in y direction
+	    for jj in range(1,y.shape[0]):
+	        #roadClip=[]
+	        lat_point_list = [y[jj-1], y[jj], y[jj], y[jj-1]]
+	        lon_point_list = [x[ii-1], x[ii-1], x[ii], x[ii]]
+	        cel = Polygon(zip(lon_point_list, lat_point_list))
+	        polygons.append(cel)
+    return polygons,x,y
+   	    
+   	    
