@@ -93,7 +93,7 @@ def dataSUSvulGroups(hospUsed):
     return hospUsed
 
 def HospDisaggregation(fileId,lati,latf,loni,lonf,
-                       deltaX,deltaY,prefix,runOrNotTemporal,vulGroups):
+                       deltaX,deltaY,prefix,runOrNotTemporal,vulGroups,useClosestCEP):
     
     # Seting root folder
     rootPath= os.path.abspath(os.getcwd())
@@ -132,6 +132,7 @@ def HospDisaggregation(fileId,lati,latf,loni,lonf,
     hospUsed = hosp[hospok].copy()
     hospUsed = hospUsed.reset_index(drop=True)
     hospUnused = hosp[hospok==False].copy()
+
     
     # Start fail reports
     #report = pd.DataFrame()
@@ -139,9 +140,27 @@ def HospDisaggregation(fileId,lati,latf,loni,lonf,
                            'listCEP_valid': [listCEP.shape[0]],
                            'Hosp_total':[hosp.shape[0]],
                            'Hosp_with_latlon': [hospUsed.shape[0]]})
+    report.to_csv(outPath+ '/report_'+fileId, header=True)
 
     hospUnused.to_csv(outPath+ '/report_hospUnused'+fileId, header=True)
-    report.to_csv(outPath+ '/report_'+fileId, header=True)
+    
+    for jj in range(0, hospUnused.shape[0]):
+        print(jj)
+        hospUnused.CEP[jj] = min(listCEPused.cep, key=lambda x:abs(x-hospUnused.CEP.values[0]))       
+    hospUnused.to_csv(outPath+ '/report_hospClosestCEP'+fileId, header=True)
+    
+    
+    
+    
+    
+    if useClosestCEP ==True:
+        hospUsed = pd.concat([hospUsed, hospUnused])
+    
+    
+    
+    
+    
+    
     
     lia, loct = ismember(np.array(hospUsed.CEP,dtype=float),
                     np.array(listCEPused.cep,dtype=float))

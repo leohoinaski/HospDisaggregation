@@ -109,6 +109,7 @@ vulGroups =  ['Total','less14','more60','adults',
 baseGridFile = 'baseGrid_'+prefix+'.csv'
 years =range(2002,2019)
 years = [2008]
+useClosestCEP=True
 
 #%%
 
@@ -126,7 +127,7 @@ fileIds = [filename for filename in os.listdir(rootPath+'/Inputs/') if
 
 for fileId in fileIds:        
     years = HospDisaggregation(fileId, lati, latf, loni, lonf, 
-                       deltaX, deltaY, prefix,runOrNotTemporal, vulGroups)
+                       deltaX, deltaY, prefix,runOrNotTemporal, vulGroups,useClosestCEP)
 
 pop_regrid(years,baseGridFile)
 
