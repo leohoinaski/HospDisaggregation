@@ -25,14 +25,12 @@ import pandas as pd
 import os
 import xarray as xr
 
-
-
 #----------------------------Start Processing----------------------------------
 
 #%% regrid function
 def regridding(year,basefile,polCoords,rootPath,grid_int):
     #abrindo o arquivo tiff
-    pop_path =  rootPath+'/Inputs/bra_ppp_'+str(year)+'_1km_Aggregated_UNadj.tif'
+    pop_path =  rootPath+'/Inputs/pop/bra_ppp_'+str(year)+'_1km_Aggregated_UNadj.tif'
     pop = xr.open_rasterio(pop_path)
     
     # lat inicial e final da grade de dados de população
@@ -61,7 +59,7 @@ def regridding(year,basefile,polCoords,rootPath,grid_int):
 
 #%% Calling the function 
 
-def pop_regrid(years,basefile):
+def pop_regrid(year,basefile):
     #Set root folder
     rootPath= os.path.abspath(os.getcwd())
     
@@ -79,6 +77,5 @@ def pop_regrid(years,basefile):
         
     polCoords = np.array(polCoords)
     
-    for year in years:
-        regridding(year,basefile,polCoords,rootPath,grid_int)
+    regridding(year,basefile,polCoords,rootPath,grid_int)
     

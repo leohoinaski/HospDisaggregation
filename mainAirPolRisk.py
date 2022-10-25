@@ -70,6 +70,9 @@ from HospDisaggregation_v2 import HospDisaggregation
 from pop_regrid import pop_regrid
 from pop_rel import pop_relativization
 import os
+from gridding import domainAndGrid, gridding, domainAndGridMCIP
+import geopandas as gpd
+from disagUnusedCEP import disagUnusedCEP
 
 #%%-----------------------------INPUTS-----------------------------------------
 
@@ -96,20 +99,17 @@ deltaY = 0.5 # Grig resolution/spacing in y direction
 
 prefix = str(deltaX)+'x'+str(deltaY) # grid definition identification
 
-#fileId = 'BR_respiratory' # Code to identify your output files
-
-disType = 'RESP'
+fileIds = ['INTER_BR_2011_RESP.csv'] # Code to identify your output files
 
 runOrNotTemporal = 1 # Run or not daily temporal profile and daily netCDF
 
 vulGroups =  ['Total','less14','more60','adults',
              'mens','womans','blacks','whites',
-             'brown','indigenous','asian']
+             'brown','indigenous','asian','VAL_TOT','deaths']
 
 baseGridFile = 'baseGrid_'+prefix+'.csv'
-years =range(2002,2019)
-years = [2008]
-useClosestCEP=True
+mcipGRIDDOT2DPath=[]
+gridType=0 # 0 for user-defined grid
 
 #%%
 
@@ -122,13 +122,27 @@ if os.path.isdir(outPath)==0:
     os.mkdir(outPath)
 
 # Files with prefix equal to hospFile in Inputs folder
-fileIds = [filename for filename in os.listdir(rootPath+'/Inputs/') if 
-                     filename.startswith(hospFile)]
+# fileIds = [filename for filename in os.listdir(rootPath+'/Inputs/') if 
+#                      filename.startswith(hospFile)]
+
+if gridType==1:
+    domainAndGridMCIP(mcipGRIDDOT2DPath)
+else:
+    # Calling  domainAndGrid
+    polygons,x,y=domainAndGrid(lati,loni,latf,lonf, deltaX,deltaY)
+
+# Creating basegridfile
+baseGrid = gpd.GeoDataFrame({'geometry':polygons})
+baseGrid.to_csv(outPath+'/baseGrid_'+prefix+'.csv')
+baseGrid.crs = "EPSG:4326" 
+print('baseGrid_'+prefix+'.csv was created at ' + outPath )
+
+# Calling gridding function 
+grids,xv,yv,xX,yY = gridding(x,y)
+
 
 for fileId in fileIds:        
-    years = HospDisaggregation(fileId, lati, latf, loni, lonf, 
-                       deltaX, deltaY, prefix,runOrNotTemporal, vulGroups,useClosestCEP)
-
-pop_regrid(years,baseGridFile)
-
-pop_relativization(years,disType,prefix)
+    year = HospDisaggregation(fileId,xX,yY,prefix,runOrNotTemporal,vulGroups)
+    pop_regrid(year,baseGridFile)
+    disagUnusedCEP(fileId,outPath,year,prefix,xX,yY,vulGroups)
+    pop_relativization(year,fileId,prefix)

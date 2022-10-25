@@ -92,8 +92,62 @@ def dataSUSvulGroups(hospUsed):
     hospUsed['asian'] = asi
     return hospUsed
 
-def HospDisaggregation(fileId,lati,latf,loni,lonf,
-                       deltaX,deltaY,prefix,runOrNotTemporal,vulGroups,useClosestCEP):
+def Hosp2netCDF(hospUsed,xX,yY,fileId,outPath,
+                prefix,vulGroups):
+    # Converting to geodataframe   
+    hospGPD = gpd.GeoDataFrame(
+    hospUsed, geometry=gpd.points_from_xy(hospUsed.lon, hospUsed.lat))
+    hospGPD.crs = "EPSG:4326"
+    
+    hospGPD = hospGPD[pd.DatetimeIndex(hospGPD["DT_INTER"]).year==hospGPD["ANO_CMPT"][0]]
+    
+    # Removing bad geometries
+    hospGPD.dropna(subset=['lat'], how='any',inplace=True)
+    hospGPD=hospGPD[hospGPD['geometry'].is_valid].reset_index(drop=True)
+    
+    dataHosp = hospGPD[['Total','less14','more60','adults',
+                    'mens','womans','blacks','whites',
+    	                    'brown','indigenous','asian','VAL_TOT','MORTE']].copy() 
+    dataHosp.rename(columns = {"MORTE": "deaths"}, 
+          inplace = True)
+    
+    # Collecting hospitalization centroids 
+    center = hospGPD.geometry.centroid
+    center.to_crs("EPSG:4326")
+    center = center.reset_index(drop=True)
+    
+    #-------------------- Calling populatingGrid function -------------------------
+    # Populating grid and consolidating for one year
+    dataAnnual = populatingGrid(dataHosp,center,xX,yY)
+    
+    #---------------------------Creating netCDF file-------------------------------
+
+    # Calling createNETCDFtemporal - ANNUAL HOSPITALIZATION
+    startDate = datetime.datetime(hospUsed.ANO_CMPT[0], 1, 1, 0, 0)
+    endDate = datetime.datetime(hospUsed.ANO_CMPT[0], 1, 1, 1, 0)
+    datePfct = np.arange(np.datetime64(startDate),np.datetime64(endDate),3600000000)
+    dates = pd.DataFrame(datePfct)   
+    dates['year'] = hospUsed.ANO_CMPT[0]
+    dates['month'] = 1
+    dates['day'] = 1
+    dates['hour'] = 00
+    
+    # Name of you output file
+    name = 'HOSP_'+str(hospUsed.ANO_CMPT[0])+'_'+fileId+'_'+prefix+'_annual'+'.nc'
+    
+    year = hospUsed.ANO_CMPT[0]
+    	    
+    createNETCDFtemporal(outPath,name,dataAnnual,xX,yY,dates,'Annual')
+    
+    # Name of you output file
+    for vulGroup in vulGroups:
+        name = 'HOSP_'+str(hospUsed.ANO_CMPT[0])+'_daily_'+fileId+'_'+prefix+'_'+vulGroup+'.nc'
+        dataTempo,datePfct= populatingGridMatHOSP(hospGPD,dataHosp[vulGroup],center,xX,yY,hospUsed.ANO_CMPT[0]) 
+        createNETCDFtemporal(outPath,name,dataTempo,xX,yY,datePfct,'Daily')
+    
+    return year   
+
+def HospDisaggregation(fileId,xX,yY,prefix,runOrNotTemporal,vulGroups):
     
     # Seting root folder
     rootPath= os.path.abspath(os.getcwd())
@@ -101,9 +155,16 @@ def HospDisaggregation(fileId,lati,latf,loni,lonf,
     # Seting output folder
     outPath=rootPath+'/Outputs'
     
+    # cd to the main folder
+    os.chdir(rootPath)
+    
+    # Creating output directory
+    if os.path.isdir(outPath)==0:
+        os.mkdir(outPath)
+    
     listCEPfile = 'qualocep_geo.csv'
     # Reading CEP to latlon file
-    listCEP = pd.read_csv(rootPath+'/Inputs/'+listCEPfile, delimiter="|",encoding='utf8')  
+    listCEP = pd.read_csv(rootPath+'/Inputs/aux/'+listCEPfile, delimiter="|",encoding='utf8')  
     
     # Replacing strings and outrange -  by nan 
     listCEP['longitude']=listCEP['longitude'].replace('-', np.nan)
@@ -112,14 +173,14 @@ def HospDisaggregation(fileId,lati,latf,loni,lonf,
     listCEP['latitude'] = listCEP['latitude'].replace('overquota', np.nan)
     listCEP['longitude']=listCEP['longitude'].astype(np.float32)
     listCEP['latitude']=listCEP['latitude'].astype(np.float32)
-    listCEP[listCEP['longitude']>lonf] = np.nan
-    listCEP[listCEP['longitude']<loni] = np.nan
-    listCEP[listCEP['latitude']>latf] = np.nan
-    listCEP[listCEP['latitude']<lati] = np.nan
+    listCEP[listCEP['longitude']>np.max(xX)] = np.nan
+    listCEP[listCEP['longitude']<np.min(xX)] = np.nan
+    listCEP[listCEP['latitude']>np.max(yY)] = np.nan
+    listCEP[listCEP['latitude']<np.min(yY)] = np.nan
     listCEP = listCEP.dropna()
      
     # Reading hospitalization data
-    hosp = pd.read_csv(rootPath+'/Inputs/'+fileId,delimiter=';')
+    hosp = pd.read_csv(rootPath+'/Inputs/hospData/'+fileId,delimiter=';')
     	    
    	#----------------------Hospitalization CEP to latlon---------------------------
    
@@ -133,35 +194,16 @@ def HospDisaggregation(fileId,lati,latf,loni,lonf,
     hospUsed = hospUsed.reset_index(drop=True)
     hospUnused = hosp[hospok==False].copy()
 
-    
     # Start fail reports
-    #report = pd.DataFrame()
     report = pd.DataFrame({'listCEP_original':[listCEP.shape[0]],
                            'listCEP_valid': [listCEP.shape[0]],
                            'Hosp_total':[hosp.shape[0]],
                            'Hosp_with_latlon': [hospUsed.shape[0]]})
     report.to_csv(outPath+ '/report_'+fileId, header=True)
 
-    hospUnused.to_csv(outPath+ '/report_hospUnused'+fileId, header=True)
+    hospUnused.to_csv(outPath+ '/report_hospUnused_'+fileId, header=True)
     
-    for jj in range(0, hospUnused.shape[0]):
-        print(jj)
-        hospUnused.CEP[jj] = min(listCEPused.cep, key=lambda x:abs(x-hospUnused.CEP.values[0]))       
-    hospUnused.to_csv(outPath+ '/report_hospClosestCEP'+fileId, header=True)
-    
-    
-    
-    
-    
-    if useClosestCEP ==True:
-        hospUsed = pd.concat([hospUsed, hospUnused])
-    
-    
-    
-    
-    
-    
-    
+    # Finding coord    
     lia, loct = ismember(np.array(hospUsed.CEP,dtype=float),
                     np.array(listCEPused.cep,dtype=float))
     
@@ -178,87 +220,9 @@ def HospDisaggregation(fileId,lati,latf,loni,lonf,
     hospUsed['DT_INTER']=pd.to_datetime(hospUsed['DT_INTER'],format='%Y%m%d')
     hospUsed = hospUsed.sort_values(by="DT_INTER")
     
-    # Converting to geodataframe   
-    hospGPD = gpd.GeoDataFrame(
-    hospUsed, geometry=gpd.points_from_xy(hospUsed.lon, hospUsed.lat))
-    hospGPD.crs = "EPSG:4326"
-    
-    hospGPD = hospGPD[pd.DatetimeIndex(hospGPD["DT_INTER"]).year==hospGPD["ANO_CMPT"][0]]
-    
-    # Removing bad geometries
-    hospGPD.dropna(subset=['lat'], how='any',inplace=True)
-    hospGPD=hospGPD[hospGPD['geometry'].is_valid].reset_index(drop=True)
-    
-    dataHosp = hospGPD[['Total','less14','more60','adults',
-                    'mens','womans','blacks','whites',
-    	                    'brown','indigenous','asian']].copy() 
-    
-    # Collecting hospitalization centroids 
-    center = hospGPD.geometry.centroid
-    center.to_crs("EPSG:4326")
-    center = center.reset_index(drop=True)
-    
-    # Calling  domainAndGrid
-    polygons,x,y=domainAndGrid(lati,loni,latf,lonf, deltaX,deltaY)
-    
-    # Creating basegridfile
-    baseGrid = gpd.GeoDataFrame({'geometry':polygons})
-    baseGrid.to_csv(outPath+'/baseGrid_'+prefix+'.csv')
-    baseGrid.crs = "EPSG:4326" 
-    print('baseGrid_'+prefix+'.csv was created at ' + outPath )
-    
-    # Calling gridding function 
-    grids,xv,yv,xX,yY = gridding(x,y)
-    
-    #-------------------- Calling populatingGrid function -------------------------
-    # Populating grid and consolidating for one year
-    dataAnnual = populatingGrid(dataHosp,center,xX,yY,xv,yv)
-    
-    #---------------------------Creating netCDF file-------------------------------
-    # Name of you output file
-    name = 'HOSP_annual_'+fileId+'_'+str(deltaX)+'x'+str(deltaY)+'_'+str(hospUsed.ANO_CMPT[0])+'.nc'
-    
-    # Calling createNETCDFtemporal - ANNUAL HOSPITALIZATION
-    startDate = datetime.datetime(hospUsed.ANO_CMPT[0], 1, 1, 0, 0)
-    endDate = datetime.datetime(hospUsed.ANO_CMPT[0], 1, 1, 1, 0)
-    datePfct = np.arange(np.datetime64(startDate),np.datetime64(endDate),3600000000)
-    dates = pd.DataFrame(datePfct)   
-    dates['year'] = hospUsed.ANO_CMPT[0]
-    dates['month'] = 1
-    dates['day'] = 1
-    dates['hour'] = 00
-    
-    year = hospUsed.ANO_CMPT[0]
-    
-    # cd to the main folder
-    os.chdir(rootPath)
-    
-    # Creating output directory
-    if os.path.isdir(outPath)==0:
-        os.mkdir(outPath)
-    	    
-    createNETCDFtemporal(outPath,name,dataAnnual,xv,yv,y,x,dates,'Annual')
-    
-    # Name of you output file
-    if runOrNotTemporal==1:
-    # print('Start parallell processing')
-    # cpus = mp.cpu_count()-2
-    # fileChunks = np.array_split(fileIds, cpus)
-    # pool = mp.Pool(processes=cpus)  
-    # chunk_processes = [pool.apply_async(hospDisag, 
-    #                                     args=(chunk,rootPath,outPath,listCEPfile,lati,latf,loni,lonf,deltaX,deltaY,prefix,runOrNotTemporal,vulGroups)) for chunk in fileChunks]                    
-    # #new section
-    # pool.close()
-    # pool.join()  
-    # pool.terminate()
-    # #end new section
-        for vulGroup in vulGroups:
-            name = 'HOSP_daily_'+fileId+'_'+str(deltaX)+'x'+str(deltaY)+'_'+str(hospUsed.ANO_CMPT[0])+'_'+vulGroup+'.nc'
-            dataTempo,datePfct= populatingGridMatHOSP(hospGPD,dataHosp[vulGroup],center,xX,yY,hospUsed.ANO_CMPT[0]) 
-            createNETCDFtemporal(outPath,name,dataTempo,xv,yv,y,x,datePfct,'Daily')
-        
-       
-     
+    year = Hosp2netCDF(hospUsed,xX,yY,fileId,outPath,
+                    prefix,vulGroups)
+      
     return year
      
  

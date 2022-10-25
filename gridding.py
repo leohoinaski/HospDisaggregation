@@ -33,8 +33,8 @@ def gridding(lon,lat):
     yY = np.array(grids['Y']).reshape((lon.shape[0]-1,lat.shape[0]-1)).transpose()
     return grids,xv,yv,xX,yY
 
-def populatingGrid(dataHosp,center,xX,yY,xv,yv):   
-    data = np.zeros([1,dataHosp.shape[1],np.size(yv,0)-1, np.size(xv,1)-1])
+def populatingGrid(dataHosp,center,xX,yY):   
+    data = np.zeros([1,dataHosp.shape[1],np.size(yY,0), np.size(xX,1)])
     xcenter = center.geometry.centroid.x
     ycenter = center.geometry.centroid.y
    

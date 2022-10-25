@@ -14,7 +14,7 @@ Inputs:
     
     data: matrix with data ready to convert in netCDF
     
-    xv, yv: meshgrid outputs - grid definition
+    xX, yY: meshgrid outputs - grid definition
     
     lat, lon = grid latitude and longitudes
     
@@ -43,7 +43,7 @@ import numpy as np
 import datetime
 
 
-def createNETCDFtemporal(folder,name,data,xv,yv,lat,lon,dates,outType):
+def createNETCDFtemporal(folder,name,data,xX,yY,dates,outType):
     cdate = datetime.datetime.now()
     cdateStr = int(str(cdate.year)+str(cdate.timetuple().tm_yday))
     ctime = int(str(cdate.hour)+str(cdate.minute)+str(cdate.second))
@@ -68,20 +68,20 @@ def createNETCDFtemporal(folder,name,data,xv,yv,lat,lon,dates,outType):
     f2.STIME= 0
     f2.TSTEP= 240000
     f2.NTHIK= 1
-    f2.NCOLS= np.size(xv,1)-1
-    f2.NROWS= np.size(yv,0)-1
+    f2.NCOLS= np.size(xX,1)-1
+    f2.NROWS= np.size(yY,0)-1
     f2.NLAYS= 1
     f2.NVARS= 62 #dataEmiss.shape[1]
     f2.GDTYP= 1
     f2.P_ALP= -10
     f2.P_BET= 0
-    f2.P_GAM= np.mean(xv)
-    f2.XCENT= np.mean(xv)
-    f2.YCENT= np.mean(yv)
-    f2.XORIG= xv.min()
-    f2.YORIG= yv.min()
-    f2.XCELL= xv[0,1] - xv[0,0]
-    f2.YCELL= yv[1,0] - yv[0,0]
+    f2.P_GAM= np.mean(xX)
+    f2.XCENT= np.mean(xX)
+    f2.YCENT= np.mean(yY)
+    f2.XORIG= xX.min()
+    f2.YORIG= yY.min()
+    f2.XCELL= xX[0,1] - xX[0,0]
+    f2.YCELL= yY[1,0] - yY[0,0]
     f2.VGTYP= -1
     f2.VGTOP= 0.0
     f2.VGLVLS= [0,0]
@@ -98,14 +98,16 @@ def createNETCDFtemporal(folder,name,data,xv,yv,lat,lon,dates,outType):
     f2.createDimension('DATE-TIME', 2)
     f2.createDimension('LAY', 1)
     f2.createDimension('VAR', data.shape[1])
-    f2.createDimension('ROW', len(lat)-1)
-    f2.createDimension('COL', len(lon)-1)
-    print('nlat ' + str(len(lat)-1 ))
-    print('nlon ' + str(len(lon)-1 ))
+    f2.createDimension('ROW', data.shape[2])
+    f2.createDimension('COL', data.shape[3])
+    print('nlat ' + str(data.shape[2]))
+    print('nlon ' + str(data.shape[3]))
     # Building variables
     TFLAG = f2.createVariable('TFLAG', 'i4', ('TSTEP', 'VAR', 'DATE-TIME'))
     print(f2['TFLAG'])
     TOTAL = f2.createVariable('TOTAL', 'f4', ('TSTEP', 'LAY', 'ROW','COL'))
+    LON = f2.createVariable('LON', 'f4', ('ROW','COL'))
+    LAT = f2.createVariable('LAT', 'f4', ('ROW','COL'))
     if outType=='Annual':
         LESS5 = f2.createVariable('LESS5', 'f4', ('TSTEP', 'LAY', 'ROW','COL'))
         MORE60 = f2.createVariable('MORE60', 'f4', ('TSTEP', 'LAY', 'ROW','COL'))
@@ -117,6 +119,8 @@ def createNETCDFtemporal(folder,name,data,xv,yv,lat,lon,dates,outType):
         BROWN = f2.createVariable('BROWN', 'f4', ('TSTEP', 'LAY', 'ROW','COL'))
         INDIGENOUS = f2.createVariable('INDIGENOUS', 'f4', ('TSTEP', 'LAY', 'ROW','COL'))
         ASIAN = f2.createVariable('ASIAN', 'f4', ('TSTEP', 'LAY', 'ROW','COL'))
+        VAL_TOT = f2.createVariable('VAL_TOT', 'f4', ('TSTEP', 'LAY', 'ROW','COL'))
+        DEATHS = f2.createVariable('DEATHS', 'f4', ('TSTEP', 'LAY', 'ROW','COL'))
         LESS5[:,:,:,:] =  data[:,1,:,:]
         MORE60[:,:,:,:] =  data[:,2,:,:]
         ADULTS[:,:,:,:] =  data[:,3,:,:]
@@ -127,6 +131,8 @@ def createNETCDFtemporal(folder,name,data,xv,yv,lat,lon,dates,outType):
         BROWN[:,:,:,:] =  data[:,8,:,:]
         INDIGENOUS[:,:,:,:] =  data[:,9,:,:]
         ASIAN[:,:,:,:] =  data[:,10,:,:]
+        VAL_TOT[:,:,:,:] =  data[:,11,:,:]
+        DEATHS[:,:,:,:] =  data[:,12,:,:]
         LESS5.units = 'Less than 5 year old'
         MORE60.units = 'More than 60 years old'
         ADULTS.units = 'Total number of adults'
@@ -137,18 +143,23 @@ def createNETCDFtemporal(folder,name,data,xv,yv,lat,lon,dates,outType):
         BROWN.units = 'Total number browns'
         INDIGENOUS.units = 'Total number of indigenous'
         ASIAN.units = 'Total number of asian'
+        VAL_TOT.units = 'Total in $R'
+        DEATHS.units = 'Total number of deaths'
 
 
     print(tflag.shape)
     TFLAG[:,:,:] = tflag
     #TFLAG[:] = dates.iloc[:,0].dt.strftime('%Y-%m-%d %H:%M:%S')
     TOTAL[:,:,:,:] =  data[:,0,:,:]
+    LON[:,:]=xX
+    LAT[:,:]=yY
 
     
     #Add local attributes to variable instances
     TFLAG.units = '<YYYYDDD,HHMMSS>'
     TOTAL.units = 'Total number'
-
+    LON.units = 'Center longitude in degrees'
+    LAT.units = 'Center latitude in degrees'
 
 
     
