@@ -28,7 +28,7 @@ import xarray as xr
 #----------------------------Start Processing----------------------------------
 
 #%% regrid function
-def regridding(year,basefile,polCoords,rootPath,grid_int):
+def regridding(prefix,year,baseGridFile,polCoords,rootPath,grid_int):
     #abrindo o arquivo tiff
     pop_path =  rootPath+'/Inputs/pop/bra_ppp_'+str(year)+'_1km_Aggregated_UNadj.tif'
     pop = xr.open_rasterio(pop_path)
@@ -54,17 +54,19 @@ def regridding(year,basefile,polCoords,rootPath,grid_int):
         grid_pop.append(popFlatSum)
     
     grid_int['pop'] = grid_pop
-    grid_int.to_csv(rootPath+'/Outputs/pop_regrid_'+str(year)+'_'+basefile.split('_')[1])
+    grid_int.to_csv(rootPath+'/Outputs/'+prefix+'/pop_regrid_'+str(year)+'_'+baseGridFile.split('_')[1])
     return grid_pop
+
+   
 
 #%% Calling the function 
 
-def pop_regrid(year,basefile):
+def pop_regrid(prefix,year,baseGridFile):
     #Set root folder
     rootPath= os.path.abspath(os.getcwd())
     
     # Opening baseGrid file
-    path_grid = rootPath+'/Outputs/'+basefile
+    path_grid = rootPath+'/Outputs/'+prefix+'/'+baseGridFile
     grid_int = pd.read_csv(path_grid, sep=",")
     grid_int['geometry'] = gpd.GeoSeries.from_wkt(grid_int['geometry'] )
     grid_int = gpd.GeoDataFrame({'geometry':grid_int['geometry']})
@@ -77,5 +79,5 @@ def pop_regrid(year,basefile):
         
     polCoords = np.array(polCoords)
     
-    regridding(year,basefile,polCoords,rootPath,grid_int)
-    
+    grid_pop=regridding(prefix,year,baseGridFile,polCoords,rootPath,grid_int)
+    return grid_pop

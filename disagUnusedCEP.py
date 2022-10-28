@@ -15,64 +15,84 @@ import numpy as np
 from HospDisaggregation_v2 import dataSUSvulGroups,Hosp2netCDF
 import warnings
 warnings.filterwarnings('ignore')
-
+from random import shuffle
 
 #%%
 
-rootPath= os.path.abspath(os.getcwd())
-outPath=rootPath+'/Outputs'
+def CEP2cityCoord(hospUnused,citySHP,pop):
+    cepNoCoord = hospUnused.groupby(['MUNIC_RES']).size()
+    for uns in range(0,cepNoCoord.shape[0]):
+        print('Pop pixels in city: '+str(cepNoCoord.index[uns]))
+        print(str(uns)+'/'+str(cepNoCoord.size))       
+        popCity = gpd.clip(pop['center'].to_crs("EPSG:4326"), citySHP[np.floor(citySHP.CD_MUN.astype(float)/10).astype(int)==
+               cepNoCoord.index[uns]]['geometry'])
+        if popCity.shape[0]==0:
+            print('Buffering city shape - 0.01°')
+            popCity = gpd.clip(pop['center'].to_crs("EPSG:4326"), citySHP[np.floor(citySHP.CD_MUN.astype(float)/10).astype(int)==
+                    cepNoCoord.index[uns]]['geometry'].buffer(0.01).to_crs("EPSG:4326"))
+        if popCity.shape[0]==0:
+            print('Buffering city shape - 0.05°')
+            popCity = gpd.clip(pop['center'].to_crs("EPSG:4326"), citySHP[np.floor(citySHP.CD_MUN.astype(float)/10).astype(int)==
+                    cepNoCoord.index[uns]]['geometry'].buffer(0.05))
+        if popCity.shape[0]==0:
+            print('Buffering city shape - 0.2°')
+            popCity = gpd.clip(pop['center'].to_crs("EPSG:4326"), citySHP[np.floor(citySHP.CD_MUN.astype(float)/10).astype(int)==
+                   cepNoCoord.index[uns]]['geometry'].buffer(0.2))
+            
+        if popCity.empty or popCity.shape[0]==0:
+            
+            hospUnused['lon'][hospUnused['MUNIC_RES']==cepNoCoord.index[uns]]=np.nan
+            hospUnused['lat'][hospUnused['MUNIC_RES']==cepNoCoord.index[uns]]=np.nan
+            
+        else:
+            probPop = pop['pop'][popCity.index]/pop['pop'][popCity.index].sum()
+            cityNoCEP = hospUnused[hospUnused['MUNIC_RES']==cepNoCoord.index[uns]]
 
-def disagUnusedCEP(fileId,outPath,year,prefix,
-                   xX,yY,vulGroups):
+            x = [[i] for i in cityNoCEP.index]
+            shuffle(x)
+            nPop = (probPop*cityNoCEP.shape[0]).astype(int)
+            nPop[nPop==nPop.max()] = nPop.max() + cityNoCEP.shape[0]-nPop.sum()
+            xgroups = np.split(x, np.cumsum(nPop))
+            
+            for jj in range(0,nPop.shape[0]):
+                
+                hospUnused['lon'][xgroups[jj].flatten()] = pop['center'][nPop.index[jj]].x
+                hospUnused['lat'][xgroups[jj].flatten()] = pop['center'][nPop.index[jj]].y
+        
+    return hospUnused
+#%%
+
+def disagUnusedCEP(fileId,year,prefix,xX,yY,vulGroups):
+    
+    rootPath= os.path.abspath(os.getcwd())
+    outPath=rootPath+'/Outputs/'+prefix
     
     citySHP = gpd.read_file(rootPath+"/Inputs/shapefiles/BR_Municipios_2020.shp")
     citySHP = citySHP.to_crs("EPSG:4326")
+    
     hospUnused = pd.read_csv(outPath+ '/report_hospUnused_'+fileId)
    
-    path_pop = rootPath+'/Outputs/pop_regrid_'+str(year)+'_'+prefix+'.csv'
+    path_pop = rootPath+'/Outputs/'+prefix+'/pop_regrid_'+str(year)+'_'+prefix+'.csv'
     pop = pd.read_csv(path_pop, sep=",")
-    
     pop['geometry'] = gpd.GeoSeries.from_wkt(pop['geometry'] )
     pop = gpd.GeoDataFrame(pop,geometry=pop['geometry'])
     pop.crs = "EPSG:4326"
     pop = pop.to_crs("EPSG:4326")
     pop['center']=pop.geometry.centroid
     
-    
     # fig, ax = plt.subplots(1, 1)
     # pop.plot(ax=ax,column='pop')
     # citySHP.plot(ax=ax)
     
-    hospUnused['Total'] = 1
+    hospUnused['TOTAL'] = 1
     hospUnused = dataSUSvulGroups(hospUnused)
     hospUnused['DT_INTER']=pd.to_datetime(hospUnused['DT_INTER'],format='%Y%m%d')
     hospUnused = hospUnused.sort_values(by="DT_INTER")
     hospUnused = hospUnused.reset_index(drop=True)
     hospUnused['lon']=np.nan
     hospUnused['lat']=np.nan
-    for uns in range(0,hospUnused.shape[0]):
-        print('Disagregating hospitalization in city: '+str(hospUnused.MUNIC_RES[uns]))
-        popCity = gpd.clip(pop['center'].to_crs("EPSG:4326"), citySHP[np.floor(citySHP.CD_MUN.astype(float)/10).astype(int)==
-               hospUnused.MUNIC_RES[uns]]['geometry'])
-        if popCity.shape[0]==0:
-            print('Buffering city shape')
-            popCity = gpd.clip(pop['center'].to_crs("EPSG:4326"), citySHP[np.floor(citySHP.CD_MUN.astype(float)/10).astype(int)==
-                    hospUnused.MUNIC_RES[uns]]['geometry'].buffer(0.01))
-        if popCity.shape[0]==0:
-            print('Buffering city shape')
-            popCity = gpd.clip(pop['center'].to_crs("EPSG:4326"), citySHP[np.floor(citySHP.CD_MUN.astype(float)/10).astype(int)==
-                    hospUnused.MUNIC_RES[uns]]['geometry'].buffer(0.05))
-        if popCity.shape[0]==0:
-            print('Buffering city shape')
-            popCity = gpd.clip(pop['center'].to_crs("EPSG:4326"), citySHP[np.floor(citySHP.CD_MUN.astype(float)/10).astype(int)==
-                    hospUnused.MUNIC_RES[uns]]['geometry'].buffer(0.1))
-        
-        if popCity.empty:
-            hospUnused['lon'][uns]=np.nan
-            hospUnused['lat'][uns]=np.nan
-        else:
-            hospUnused['lon'][uns] = pop['center'][np.argmax(pop['pop'][popCity.index])].x
-            hospUnused['lat'][uns] = pop['center'][np.argmax(pop['pop'][popCity.index])].y
+    
+    hospUnused = CEP2cityCoord(hospUnused,citySHP,pop)
     
     hospNotFound = hospUnused[hospUnused['lon']==np.nan].copy()
     report = pd.DataFrame({'hospUnused':[hospUnused.shape[0]],

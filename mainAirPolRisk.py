@@ -73,6 +73,7 @@ import os
 from gridding import domainAndGrid, gridding, domainAndGridMCIP
 import geopandas as gpd
 from disagUnusedCEP import disagUnusedCEP
+from pop_disag import pop_disag
 
 #%%-----------------------------INPUTS-----------------------------------------
 
@@ -103,9 +104,9 @@ fileIds = ['INTER_BR_2011_RESP.csv'] # Code to identify your output files
 
 runOrNotTemporal = 1 # Run or not daily temporal profile and daily netCDF
 
-vulGroups =  ['Total','less14','more60','adults',
-             'mens','womans','blacks','whites',
-             'brown','indigenous','asian','VAL_TOT','deaths']
+vulGroups =  ['TOTAL','LESS14','MORE60','ADULTS',
+             'MENS','WOMANS','BLACKS','WHITES',
+             'BROWN','INDIGENOUS','ASIAN','VAL_TOT','DEATHS']
 
 baseGridFile = 'baseGrid_'+prefix+'.csv'
 mcipGRIDDOT2DPath=[]
@@ -118,6 +119,9 @@ rootPath= os.path.abspath(os.getcwd())
 
 # Seting output folder
 outPath=rootPath+'/Outputs'
+if os.path.isdir(outPath)==0:
+    os.mkdir(outPath)
+outPath=rootPath+'/Outputs/'+prefix
 if os.path.isdir(outPath)==0:
     os.mkdir(outPath)
 
@@ -140,9 +144,19 @@ print('baseGrid_'+prefix+'.csv was created at ' + outPath )
 # Calling gridding function 
 grids,xv,yv,xX,yY = gridding(x,y)
 
-
 for fileId in fileIds:        
     year = HospDisaggregation(fileId,xX,yY,prefix,runOrNotTemporal,vulGroups)
-    pop_regrid(year,baseGridFile)
-    disagUnusedCEP(fileId,outPath,year,prefix,xX,yY,vulGroups)
-    pop_relativization(year,fileId,prefix)
+    
+    if os.path.isfile(rootPath+'/Outputs/'+prefix+'/pop_regrid_'+str(year)+'_'+baseGridFile.split('_')[1]):
+        print("File exists")
+    else:
+        grid_pop = pop_regrid(prefix,year,baseGridFile)
+        
+    if os.path.isfile(rootPath+'/Outputs/'+prefix+'/pop_regrid_byVulgroup_'+str(year)+'_'+prefix+'.csv'):
+        print("File exists")
+    else:   
+        pop_disag(vulGroups,prefix,year)
+
+    disagUnusedCEP(fileId,year,prefix,xX,yY,vulGroups)
+    pop_relativization(year,fileId,prefix,xX,yY)
+

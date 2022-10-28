@@ -109,7 +109,7 @@ def createNETCDFtemporal(folder,name,data,xX,yY,dates,outType):
     LON = f2.createVariable('LON', 'f4', ('ROW','COL'))
     LAT = f2.createVariable('LAT', 'f4', ('ROW','COL'))
     if outType=='Annual':
-        LESS5 = f2.createVariable('LESS5', 'f4', ('TSTEP', 'LAY', 'ROW','COL'))
+        LESS14 = f2.createVariable('LESS14', 'f4', ('TSTEP', 'LAY', 'ROW','COL'))
         MORE60 = f2.createVariable('MORE60', 'f4', ('TSTEP', 'LAY', 'ROW','COL'))
         ADULTS = f2.createVariable('ADULTS', 'f4', ('TSTEP', 'LAY', 'ROW','COL'))
         MENS = f2.createVariable('MENS', 'f4', ('TSTEP', 'LAY', 'ROW','COL'))
@@ -121,7 +121,7 @@ def createNETCDFtemporal(folder,name,data,xX,yY,dates,outType):
         ASIAN = f2.createVariable('ASIAN', 'f4', ('TSTEP', 'LAY', 'ROW','COL'))
         VAL_TOT = f2.createVariable('VAL_TOT', 'f4', ('TSTEP', 'LAY', 'ROW','COL'))
         DEATHS = f2.createVariable('DEATHS', 'f4', ('TSTEP', 'LAY', 'ROW','COL'))
-        LESS5[:,:,:,:] =  data[:,1,:,:]
+        LESS14[:,:,:,:] =  data[:,1,:,:]
         MORE60[:,:,:,:] =  data[:,2,:,:]
         ADULTS[:,:,:,:] =  data[:,3,:,:]
         MENS[:,:,:,:] =  data[:,4,:,:]
@@ -133,7 +133,7 @@ def createNETCDFtemporal(folder,name,data,xX,yY,dates,outType):
         ASIAN[:,:,:,:] =  data[:,10,:,:]
         VAL_TOT[:,:,:,:] =  data[:,11,:,:]
         DEATHS[:,:,:,:] =  data[:,12,:,:]
-        LESS5.units = 'Less than 5 year old'
+        LESS14.units = 'Less than 5 year old'
         MORE60.units = 'More than 60 years old'
         ADULTS.units = 'Total number of adults'
         MENS.units = 'Total number of mens'

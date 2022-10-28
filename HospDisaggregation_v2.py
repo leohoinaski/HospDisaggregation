@@ -8,7 +8,7 @@ import geopandas as gpd
 import pandas as pd
 import os
 from netCDFcreator import createNETCDFtemporal
-from gridding import gridding,populatingGrid,populatingGridMatHOSP,domainAndGrid
+from gridding import populatingGrid,populatingGridMatHOSP
 import datetime
 from ismember import ismember
 
@@ -80,16 +80,16 @@ def dataSUSvulGroups(hospUsed):
         else:
             asi.append(0)
     # Adding data to dataframe
-    hospUsed['more60'] = more60
-    hospUsed['less14'] = less14
-    hospUsed['adults'] = adults
-    hospUsed['mens'] = mens
-    hospUsed['womans'] = wo
-    hospUsed['blacks'] = bl
-    hospUsed['whites'] = wh
-    hospUsed['brown'] = bro
-    hospUsed['indigenous'] = ind
-    hospUsed['asian'] = asi
+    hospUsed['MORE60'] = more60
+    hospUsed['LESS14'] = less14
+    hospUsed['ADULTS'] = adults
+    hospUsed['MENS'] = mens
+    hospUsed['WOMANS'] = wo
+    hospUsed['BLACKS'] = bl
+    hospUsed['WHITES'] = wh
+    hospUsed['BROWN'] = bro
+    hospUsed['INDIGENOUS'] = ind
+    hospUsed['ASIAN'] = asi
     return hospUsed
 
 def Hosp2netCDF(hospUsed,xX,yY,fileId,outPath,
@@ -105,10 +105,10 @@ def Hosp2netCDF(hospUsed,xX,yY,fileId,outPath,
     hospGPD.dropna(subset=['lat'], how='any',inplace=True)
     hospGPD=hospGPD[hospGPD['geometry'].is_valid].reset_index(drop=True)
     
-    dataHosp = hospGPD[['Total','less14','more60','adults',
-                    'mens','womans','blacks','whites',
-    	                    'brown','indigenous','asian','VAL_TOT','MORTE']].copy() 
-    dataHosp.rename(columns = {"MORTE": "deaths"}, 
+    dataHosp = hospGPD[ ['TOTAL','LESS14','MORE60','ADULTS',
+                 'MENS','WOMANS','BLACKS','WHITES',
+                 'BROWN','INDIGENOUS','ASIAN','VAL_TOT','MORTE']].copy() 
+    dataHosp.rename(columns = {"MORTE": "DEATHS"}, 
           inplace = True)
     
     # Collecting hospitalization centroids 
@@ -141,7 +141,7 @@ def Hosp2netCDF(hospUsed,xX,yY,fileId,outPath,
     
     # Name of you output file
     for vulGroup in vulGroups:
-        name = 'HOSP_'+str(hospUsed.ANO_CMPT[0])+'_daily_'+fileId+'_'+prefix+'_'+vulGroup+'.nc'
+        name = 'HOSP_'+str(hospUsed.ANO_CMPT[0])+'_'+fileId+'_'+prefix+'_'+vulGroup+'_daily'+'.nc'
         dataTempo,datePfct= populatingGridMatHOSP(hospGPD,dataHosp[vulGroup],center,xX,yY,hospUsed.ANO_CMPT[0]) 
         createNETCDFtemporal(outPath,name,dataTempo,xX,yY,datePfct,'Daily')
     
@@ -153,7 +153,7 @@ def HospDisaggregation(fileId,xX,yY,prefix,runOrNotTemporal,vulGroups):
     rootPath= os.path.abspath(os.getcwd())
     
     # Seting output folder
-    outPath=rootPath+'/Outputs'
+    outPath=rootPath+'/Outputs/'+prefix
     
     # cd to the main folder
     os.chdir(rootPath)
@@ -211,7 +211,7 @@ def HospDisaggregation(fileId,xX,yY,prefix,runOrNotTemporal,vulGroups):
     hospUsed['lat'] = np.array(listCEPused.iloc[loct,1])
     
     # Setting conditions for vulnerability groups
-    hospUsed['Total'] = 1
+    hospUsed['TOTAL'] = 1
     
     #Grouping by vulnerability
     hospUsed = dataSUSvulGroups(hospUsed)
