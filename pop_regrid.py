@@ -1,23 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-----------------------------------pop_grid.py----------------------------------
-
-This function regrids the population data from XXX to an specific grid size, 
-according to baseGrid file created in HospDisaggregation function. 
-
-Inputs: 
-    basefile =  name of baseGrid file
-    years = years considered in the disaggregation
-    
-Outputs:
-    
-
-
-Created on Mon Mar 14 11:33:07 2022
-
 @author: Julia Moore and Leonardo Hoinaski
--------------------------------------------------------------------------------
+
 """
+
 # Importing libraries
 import numpy as np
 import geopandas as gpd

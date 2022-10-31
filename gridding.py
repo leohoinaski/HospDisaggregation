@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Oct 15 16:50:56 2021
+Author: Leonardo Hoinaski - leonardo.hoinaski@ufsc.br
 
-@author: leohoinaski
 """
 #import netCDF4 as nc4
 import geopandas as gpd

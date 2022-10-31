@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
- -------------------------------------------------------------------------------
-                              HospDisaggregation.py                             
+Author: Leonardo Hoinaski - leonardo.hoinaski@ufsc.br
+                    
 """
+
 import numpy as np
 import geopandas as gpd
 import pandas as pd
@@ -164,7 +165,7 @@ def HospDisaggregation(fileId,xX,yY,prefix,runOrNotTemporal,vulGroups):
     
     listCEPfile = 'qualocep_geo.csv'
     # Reading CEP to latlon file
-    listCEP = pd.read_csv(rootPath+'/Inputs/aux/'+listCEPfile, delimiter="|",encoding='utf8')  
+    listCEP = pd.read_csv(rootPath+'/Inputs/utils/'+listCEPfile, delimiter="|",encoding='utf8')  
     
     # Replacing strings and outrange -  by nan 
     listCEP['longitude']=listCEP['longitude'].replace('-', np.nan)

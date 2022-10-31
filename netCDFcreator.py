@@ -1,43 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
--------------------------------------------------------------------------------
-                            netCDFcreator.py
-                            
-This function creates the netCDF files ready to use in CMAQ from FINN inventory.
-
-Inputs:
-    
-    folder: folter to output files
-    
-    name: output names
-    
-    data: matrix with data ready to convert in netCDF
-    
-    xX, yY: meshgrid outputs - grid definition
-    
-    lat, lon = grid latitude and longitudes
-    
-    year: respective years of emission inventories
-    
-    month: respective month of emission inventories
-    
-    dates: dates from emission file
-    
-    specation = speciation profile used. It could be GEOS-CHEM, 
-            MOZART or SAPRC99
-
-Outputs:
-        
-    netdCDF files
-
-        
-
-Last update = 21/10/2021
-
 Author: Leonardo Hoinaski - leonardo.hoinaski@ufsc.br
----------------------------------------------------------------
+
 """
+
 import netCDF4 as nc4
 import numpy as np
 import datetime
@@ -55,7 +22,7 @@ def createNETCDFtemporal(folder,name,data,xX,yY,dates,outType):
     
     sdate =  dates['year'][0]*1000 + dates.iloc[0,0].timetuple().tm_yday  
     
-    f2 = nc4.Dataset(folder+'/'+name,'w', format='NETCDF3_CLASSIC') #'w' stands for write    
+    f2 = nc4.Dataset(folder+'/'+name,'w', format='NETCDF4') #'w' stands for write    
     #Add global attributes
     f2.IOAPI_VERSION ='$Id: @(#) ioapi library version 3.1 $'
     f2.EXEC_ID = '???????????????'
@@ -84,12 +51,8 @@ def createNETCDFtemporal(folder,name,data,xX,yY,dates,outType):
     f2.YCELL= yY[1,0] - yY[0,0]
     f2.VGTYP= -1
     f2.VGTOP= 0.0
-    f2.VGLVLS= [0,0]
-    
-    strVAR = 'Total less5 more60 adults mens womans blacks whites \n\
-        brown indigenous asian'      
-    f2.VAR_LIST=strVAR
-    f2.FILEDESC= 'Disaggregated hospitalization'
+    f2.VGLVLS= [0,0]     
+    f2.FILEDESC= 'Disaggregated hospitalization created by Leonardo Hoinaski'
     f2.HISTORY ='' 
        
     # # Specifying dimensions

@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Mar 16 14:00:01 2022
+
+@author: Leonardo Hoinaski
 
 
-Resíduo - Internações e população 
-
-@author: moore
 """
+
 import numpy as np
 #import geopandas as gpd
 import pandas as pd

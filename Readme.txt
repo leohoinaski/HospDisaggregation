@@ -1,24 +1,21 @@
- -------------------------------------------------------------------------------
-                              HospDisaggregation.py
-                              
-                              
- This is the main script to disaggregate daily hospitalization from DATASUS and
- create netCDF files with aggregated hospitalization in regular areas. 
- 
- You need to donwload the input data at: 
+------------------------------------ GHosp --------------------------------------
 
-     https://arquivos.ufsc.br/d/c3b26a10e6e946fb890e/
-
- You should create an Inputs folder within the same directory of the main function.
- Paste you inputs into the "Inputs" folder 
+ This repository disaggregates daily hospitalization from DATASUS 
+ and creates netCDF files with aggregated hospitalization in regular areas. 
  
+ Data sources:
+     https://www.worldpop.org/project/categories?id=3
+     https://www.qualocep.com/
+     https://dados.gov.br/organization/instituto-brasileiro-de-geografia-e-estatistica-ibge?q=ra%C3%A7a&sort=score+desc%2C+metadata_modified+desc
+     https://forest-gis.com/shapefile-bairros-das-cidades-brasileiras/
+     
+     Link to downlond the input folder and files:
+     	https://1drv.ms/u/s!Agz0M0-_7f5bicp0HYkk5dP0x0SKYQ?e=JpWygW
  
 
  Inputs: 
      
-     rootPath: Path to functions
-     
-     outPath: Path to outputs folder
+     fileIds = identification of your input files
      
      lati: Initial latitude (lower-left)
      
@@ -32,26 +29,22 @@
      
      deltaY: Grig resolution/spacing in y direction
                   
-     fileId = identification of your output files
-     
-     hospFile = hospitalization file from DATASUS - daily basis
-     
-     listCEPfile = list of coordinates of Braziliam postal codes
-     
      runOrNotTemporal = Run or not daily temporal profile and daily netCDF
      
-     vulGroup = vunerability group tag. 
-                 'Total' = Total number of hospitalizations
-                 'less14' = Total number of hospitalizations for younger than 14
-                 'more60' = Total number of hospitalizations for older than 60
-                 'adults' = Total number of hospitalizations for adults (15-59)
-                 'mens' = Total number of hospitalizations for mens
-                 'womans' = Total number of hospitalizations for womans
-                 'blacks' = Total number of hospitalizations for blacks 
-                 'whites' = Total number of hospitalizations for whites
-                 'brown' = Total number of hospitalizations for browns
-                 'indigenous' = Total number of hospitalizations for indigenous
-                 'asian' = Total number of hospitalizations for asians
+     vulGroup = Grouping tag. 
+                 'TOTAL' = Total number of hospitalizations
+                 'LESS14' = Total number of hospitalizations for younger than 14
+                 'MORE60' = Total number of hospitalizations for older than 60
+                 'ADULTS' = Total number of hospitalizations for adults (15-59)
+                 'MENS' = Total number of hospitalizations for mens
+                 'WOMANS' = Total number of hospitalizations for womans
+                 'BLACKS' = Total number of hospitalizations for blacks 
+                 'WHITES' = Total number of hospitalizations for whites
+                 'BRONW' = Total number of hospitalizations for browns
+                 'INDIGENOUS' = Total number of hospitalizations for indigenous
+                 'ASIAN' = Total number of hospitalizations for asians
+                 'VAL_TOT' = Total monetary value of hospitalization
+                 'DEATHS' = Total number of deaths
           
  Outputs:
      
@@ -61,12 +54,7 @@
      Daily basis netCDF
      'HOSP_daily_'+fileId+'_'+str(deltaX)+'x'+str(deltaY)+'_'+str(hosp.ANO_CMPT[0])+'.nc'
     
-     
- External functions:
-     gridding, netCDFcreator
-     
- Last update = 29/10/2021
+         
+ Last update = 31/10/2022
 
  Author: Leonardo Hoinaski - leonardo.hoinaski@ufsc.br
-
- ------------------------------------------------------------------------------
