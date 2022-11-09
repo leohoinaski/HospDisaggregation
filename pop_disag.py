@@ -9,7 +9,7 @@ import numpy as np
 import geopandas as gpd
 import pandas as pd
 import os
-
+import shapely.wkt
 # vulGroups =  ['Total','less14','more60','adults',
 #              'mens','womans','blacks','whites',
 #              'brown','indigenous','asian','VAL_TOT','deaths']
@@ -65,8 +65,9 @@ def pop_disag_byclass(grid_pop,vulGroup):
         grid_pop=grid_pop
     elif vulGroup=='DEATHS':
         grid_pop=grid_pop
-    else:   
-        popRace['geometry'] = gpd.GeoSeries.from_wkt(popRace['geom'] )
+    else:
+        popRace['geometry'] = popRace['geom'].map(shapely.wkt.loads)
+        #popRace['geometry'] = gpd.GeoSeries.from_wkt(popRace['geom'] )
         popRace = gpd.GeoDataFrame(
             popRace, geometry=popRace.geometry)
         popRace.crs = "EPSG:4326"
@@ -95,7 +96,8 @@ def pop_disag(vulGroups,prefix,year):
     rootPath= os.path.abspath(os.getcwd())
     grid_pop = pd.read_csv(rootPath+'/Outputs/'+prefix+
                            '/pop_regrid_'+str(year)+'_'+prefix+'.csv', sep=",")
-    grid_pop['geometry'] = gpd.GeoSeries.from_wkt(grid_pop['geometry'] )
+    grid_pop['geometry'] = grid_pop['geometry'].map(shapely.wkt.loads)
+    #grid_pop['geometry'] = gpd.GeoSeries.from_wkt(grid_pop['geometry'] )
     grid_pop = gpd.GeoDataFrame(
         grid_pop, geometry=grid_pop.geometry)
     grid_pop.crs = "EPSG:4326"

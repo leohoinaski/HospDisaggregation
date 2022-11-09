@@ -10,7 +10,7 @@ import geopandas as gpd
 import pandas as pd
 import os
 import xarray as xr
-
+import shapely.wkt
 #----------------------------Start Processing----------------------------------
 
 #%% regrid function
@@ -54,7 +54,11 @@ def pop_regrid(prefix,year,baseGridFile):
     # Opening baseGrid file
     path_grid = rootPath+'/Outputs/'+prefix+'/'+baseGridFile
     grid_int = pd.read_csv(path_grid, sep=",")
-    grid_int['geometry'] = gpd.GeoSeries.from_wkt(grid_int['geometry'] )
+    grid_int['geometry'] = grid_int['geometry'].map(shapely.wkt.loads)
+    
+    # grid_int['geometry'] = gpd.GeoSeries.from_wkt(grid_int['geometry'] )
+    # grid_int['geometry'] = gpd.GeoSeries.from_wkt(grid_int.iloc[:,1] )
+    
     grid_int = gpd.GeoDataFrame({'geometry':grid_int['geometry']})
     grid_int.crs = "EPSG:4326"
     
