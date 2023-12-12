@@ -87,10 +87,10 @@ deltaX = 0.625 # Grid resolution/spacing in x direction
 
 deltaY = 0.5 # Grig resolution/spacing in y direction
 
-mcipGRIDDOT2DPath='GRIDDOT2D_BR_2019.nc' # path to GRIDDOT2D file if gridType other than 0
+mcipGRIDDOT2DPath='GRIDDOT2D_SC_2019.nc' #'GRIDDOT2D_BR_2019.nc' # path to GRIDDOT2D file if gridType other than 0
 
 #prefix = str(deltaX)+'x'+str(deltaY) # grid definition identification
-prefix = 'CID10g20x20km' # grid definition identification
+prefix = 'CID10g4x4km' # grid definition identification
 #------------------------------Outputfile--------------------------------------
 runOrNotTemporal = 1 # Run or not daily temporal profile and daily netCDF
 

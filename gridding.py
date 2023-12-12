@@ -25,9 +25,9 @@ def gridding(lon,lat):
     grids = gpd.GeoDataFrame(grids) 
     grids.columns =['geometry'] 
     grids['geometry'] = grids['geometry']
-    grids.crs = "EPSG:4326"  
-    grids['X'] = grids.geometry.centroid.x
-    grids['Y'] = grids.geometry.centroid.y
+    grids.set_crs = "EPSG:4326"  
+    grids['X'] = grids['geometry'].centroid.x
+    grids['Y'] = grids['geometry'].centroid.y
     xX = np.array(grids['X']).reshape((lon.shape[0]-1,lat.shape[0]-1)).transpose()
     yY = np.array(grids['Y']).reshape((lon.shape[0]-1,lat.shape[0]-1)).transpose()
     return grids,xv,yv,xX,yY

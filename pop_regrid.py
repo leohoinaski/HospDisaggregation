@@ -11,13 +11,14 @@ import pandas as pd
 import os
 import xarray as xr
 import shapely.wkt
+import rioxarray
 #----------------------------Start Processing----------------------------------
 
 #%% regrid function
 def regridding(prefix,year,baseGridFile,polCoords,rootPath,grid_int):
     #abrindo o arquivo tiff
     pop_path =  rootPath+'/Inputs/pop/bra_ppp_'+str(year)+'_1km_Aggregated_UNadj.tif'
-    pop = xr.open_rasterio(pop_path)
+    pop = rioxarray.open_rasterio(pop_path)
     
     # lat inicial e final da grade de dados de população
     lat_pop = pop['y'].values
